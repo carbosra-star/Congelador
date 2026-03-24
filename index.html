@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>❄️ Congelador</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0f1e; color: #e2e8f0; min-height: 100vh; }
+.header { background: linear-gradient(135deg, #0f172a, #1e1b4b); border-bottom: 1px solid #1e293b; padding: 16px 20px; position: sticky; top: 0; z-index: 10; }
+.header-inner { max-width: 600px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.title { font-size: 20px; font-weight: 800; }
+.subtitle { font-size: 12px; color: #64748b; margin-top: 2px; }
+.btn-primary { background: #6366f1; color: #fff; border: none; border-radius: 10px; padding: 9px 16px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.btn-ghost { background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 10px; padding: 9px 16px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.container { max-width: 600px; margin: 0 auto; padding: 16px 20px 80px; }
+.alert-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.chip-danger { background: #f8717122; color: #f87171; border: 1px solid #f8717155; }
+.chip-warn { background: #fb923c22; color: #fb923c; border: 1px solid #fb923c55; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 10px; }
+.section-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+.toggle-btn { font-size: 11px; color: #475569; background: transparent; border: none; cursor: pointer; padding: 4px; }
+.card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+.card.warn { border-color: #f59e0b55; }
+.card.danger { border-color: #f8717155; }
+.badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-ok { background: #4ade8022; color: #4ade80; }
+.badge-warn { background: #fb923c22; color: #fb923c; }
+.badge-danger { background: #f8717122; color: #f87171; }
+.badge-blue { background: #6366f122; color: #818cf8; }
+.badge-green { background: #4ade8022; color: #4ade80; }
+.qty-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; font-size: 16px; cursor: pointer; }
+.icon-btn { background: transparent; border: 1px solid #1e293b; border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: pointer; color: #64748b; }
+.icon-btn.del { color: #f87171; }
+.empty { text-align: center; color: #334155; padding: 32px 0; font-size: 14px; }
+.pct-bar-bg { height: 6px; border-radius: 3px; background: #1e293b; flex: 1; overflow: hidden; }
+.pct-bar-fill { height: 100%; border-radius: 3px; transition: width 0.2s, background 0.2s; }
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+.modal { background: #0f172a; border: 1px solid #1e293b; border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+.modal input, .modal select, .modal textarea { width: 100%; padding: 10px 12px; border: 1px solid #334155; border-radius: 8px; background: #1e293b; color: #f1f5f9; font-size: 14px; margin-bottom: 10px; }
+.modal textarea { resize: vertical; min-height: 64px; }
+.field-label { font-size: 12px; color: #64748b; display: block; margin-bottom: 4px; }
+.row-2 { display: flex; gap: 8px; }
+.row-2 > * { flex: 1; }
+.ration-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ration-tag { font-size: 12px; color: #64748b; min-width: 80px; }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #334155; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 4px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+input[type=range] { accent-color: #6366f1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="title">❄️ Congelador</div>
+      <div class="subtitle" id="subtitle"><span class="spinner"></span>Cargando...</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-primary" onclick="openModal('tupper')">+ Tupper</button>
+      <button class="btn-ghost" onclick="openModal('stock')">+ Stock</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="alert-bar" id="alert-bar"></div>
+
+  <div class="section-header">
+    <div class="section-title">🥡 Tuppers</div>
+  </div>
+  <div id="tupper-list"></div>
+
+  <div class="section-header">
+    <div class="section-title">📦 Stock habitual</div>
+    <button class="toggle-btn" id="btn-stock" onclick="toggleStock()">▼ ver</button>
+  </div>
+  <div id="stock-section" style="display:none;">
+    <div id="stock-list"></div>
+  </div>
+</div>
+
+<!-- MODAL TUPPER -->
+<div id="modal-tupper" style="display:none;">
+  <div class="modal-bg" onclick="closeMT(event)">
+    <div class="modal">
+      <div style="font-size:17px;font-weight:800;margin-bottom:18px;" id="mt-title">Nuevo tupper</div>
+      <label class="field-label">¿Qué hay dentro?</label>
+      <textarea id="mt-name" placeholder="Ej: Lentejas con chorizo"></textarea>
+      <label class="field-label">Fecha de preparación</label>
+      <input id="mt-date" type="date" />
+      <label class="field-label" style="margin-top:4px;">Raciones adulto</label>
+      <div class="ration-row">
+        <button class="qty-btn" onclick="adjR('adult',-1)">−</button>
+        <span id="adult-val" style="min-width:32px;text-align:center;font-weight:800;">0</span>
+        <button class="qty-btn" onclick="adjR('adult',1)">+</button>
+        <span class="ration-tag">adulto(s)</span>
+      </div>
+      <label class="field-label">Raciones infantil</label>
+      <div class="ration-row">
+        <button class="qty-btn" onclick="adjR('child',-1)">−</button>
+        <span id="child-val" style="min-width:32px;text-align:center;font-weight:800;">0</span>
+        <button class="qty-btn" onclick="adjR('child',1)">+</button>
+        <span class="ration-tag">infantil(es)</span>
+      </div>
+      <div class="row-2" style="margin-top:8px;">
+        <button class="btn-ghost" onclick="closeMTD()">Cancelar</button>
+        <button class="btn-primary" id="btn-save-t" onclick="saveTupper()" style="flex:2;">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL STOCK -->
+<div id="modal-stock" style="display:none;">
+  <div class="modal-bg" onclick="closeMS(event)">
+    <div class="modal">
+      <div style="font-size:17px;font-weight:800;margin-bottom:18px;" id="ms-title">Nuevo producto</div>
+      <input id="ms-name" placeholder="Nombre (ej: Salmón)" />
+      <select id="ms-cat">
+        <option value="carne">🥩 Carne</option>
+        <option value="pescado">🐟 Pescado</option>
+        <option value="verdura">🥦 Verdura</option>
+        <option value="precocinado">📦 Precocinado</option>
+        <option value="pan">🍞 Pan / Masa</option>
+        <option value="otros">❄️ Otros</option>
+      </select>
+      <label class="field-label">Tipo de medida</label>
+      <select id="ms-mode" onchange="renderModeFields()">
+        <option value="units">Unidades</option>
+        <option value="pct">Porcentaje</option>
+      </select>
+      <div id="ms-units-fields">
+        <div class="row-2">
+          <input id="ms-qty" type="number" placeholder="Cantidad" min="0" value="1" />
+          <input id="ms-unit" placeholder="Unidad (uds, kg...)" value="uds" />
+        </div>
+      </div>
+      <div id="ms-pct-fields" style="display:none;">
+        <label class="field-label">Nivel inicial (%)</label>
+        <input id="ms-pct" type="number" min="0" max="100" value="100" />
+      </div>
+      <div class="row-2" style="margin-top:4px;">
+        <button class="btn-ghost" onclick="closeMSD()">Cancelar</button>
+        <button class="btn-primary" id="btn-save-s" onclick="saveStock()" style="flex:2;">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbwByJbXk0We8s38I4j9Vmre9EJRYqVWoZ2c5hc4Sn13MyboaWSgy4G2LC1VUS_Sy0CIuQ/exec";
+
+let tuppers=[], stocks=[], adultR=0, childR=0, stockVisible=false, pctTimer=null;
+
+function today(){ return new Date().toISOString().split("T")[0]; }
+function daysSince(d){ if(!d) return null; return Math.floor((new Date()-new Date(d))/(864e5)); }
+function fmtDate(d){ if(!d) return ""; const p=d.split("-"); return `${p[2]}/${p[1]}/${p[0]}`; }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function pctColor(p){ if(p<=20) return "#f87171"; if(p<=50) return "#fb923c"; return "#4ade80"; }
+function setStatus(msg, spin=false){ document.getElementById("subtitle").innerHTML=(spin?'<span class="spinner"></span>':'')+msg; }
+
+async function apiCall(params){
+  const url = API+"?"+new URLSearchParams(params).toString();
+  const r = await fetch(url);
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}
+async function apiRead(sheet){ return apiCall({sheet, action:"read"}); }
+async function apiWrite(sheet, action, row){ return apiCall({sheet, action, row:encodeURIComponent(JSON.stringify(row))}); }
+
+async function load(){
+  setStatus("Cargando...", true);
+  try {
+    const [tv,sv] = await Promise.all([apiRead("Tuppers"), apiRead("Stock")]);
+    tuppers = tv.map(r=>({id:String(r.id),name:r.name||"",date:r.date||"",adult:Number(r.adult)||0,child:Number(r.child)||0}));
+    stocks = sv.map(r=>({id:String(r.id),name:r.name||"",category:r.category||"otros",mode:r.mode||"units",quantity:Number(r.quantity)||0,unit:r.unit||"uds",pct:Number(r.pct)||100}));
+    setStatus(`${tuppers.length} tuppers · ${stocks.length} productos · Google Sheets`);
+  } catch(e){ setStatus("Error: "+e.message); }
+  render();
+}
+
+function render(){ renderAlerts(); renderTuppers(); renderStocks(); }
+
+function renderAlerts(){
+  const o=tuppers.filter(t=>{const d=daysSince(t.date);return d>60;});
+  const m=tuppers.filter(t=>{const d=daysSince(t.date);return d>30&&d<=60;});
+  const lp=stocks.filter(s=>s.mode==="pct"&&s.pct<=20);
+  const lo=stocks.filter(s=>s.mode==="units"&&s.quantity===0);
+  const lu=stocks.filter(s=>s.mode==="units"&&s.quantity<=2&&s.quantity>0);
+  let h="";
+  if(o.length) h+=`<span class="chip chip-danger">${o.length} tupper${o.length>1?"s":""} +60d</span>`;
+  if(m.length) h+=`<span class="chip chip-warn">${m.length} tupper${m.length>1?"s":""} +30d</span>`;
+  if(lp.length) h+=`<span class="chip chip-warn">${lp.length} stock ≤20%</span>`;
+  if(lo.length) h+=`<span class="chip chip-danger">${lo.length} agotado${lo.length>1?"s":""}</span>`;
+  if(lu.length) h+=`<span class="chip chip-warn">${lu.length} stock bajo</span>`;
+  document.getElementById("alert-bar").innerHTML=h;
+}
+
+function renderTuppers(){
+  if(!tuppers.length){ document.getElementById("tupper-list").innerHTML=`<div class="empty">Sin tuppers — añade el primero</div>`; return; }
+  const sorted=[...tuppers].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  document.getElementById("tupper-list").innerHTML=sorted.map(t=>{
+    const ds=daysSince(t.date);
+    let badge="",cls="card";
+    if(ds>60){badge=`<span class="badge badge-danger">+${ds}d</span>`;cls="card danger";}
+    else if(ds>30){badge=`<span class="badge badge-warn">${ds}d</span>`;cls="card warn";}
+    else{badge=`<span class="badge badge-ok">${ds}d</span>`;}
+    const r=[];
+    if(t.adult>0) r.push(`<span class="badge badge-blue">${t.adult} adulto${t.adult>1?"s":""}</span>`);
+    if(t.child>0) r.push(`<span class="badge badge-green">${t.child} infantil${t.child>1?"es":""}</span>`);
+    return `<div class="${cls}"><div style="display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:22px;flex-shrink:0;">🥡</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:14px;">${t.name}</div>
+        <div style="font-size:12px;color:#64748b;margin-top:3px;">Preparado: ${fmtDate(t.date)} ${badge}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${r.join("")}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <button class="icon-btn" onclick="openEditT('${t.id}')">✏️</button>
+        <button class="icon-btn del" onclick="delT('${t.id}')">🗑️</button>
+      </div>
+    </div></div>`;
+  }).join("");
+}
+
+function renderStocks(){
+  if(!stocks.length){ document.getElementById("stock-list").innerHTML=`<div class="empty">Sin productos de stock</div>`; return; }
+  const CATS={carne:"🥩",pescado:"🐟",verdura:"🥦",precocinado:"📦",pan:"🍞",otros:"❄️"};
+  document.getElementById("stock-list").innerHTML=stocks.map(s=>{
+    const e=CATS[s.category]||"❄️";
+    if(s.mode==="pct"){
+      const p=Number(s.pct)||0; const low=p<=20;
+      return `<div class="card${low?" warn":""}"><div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">${e}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-weight:700;font-size:14px;">${s.name}</span>
+            <span style="font-size:13px;font-weight:700;color:${pctColor(p)};">${p}%${low?' <span class="badge badge-warn">Comprar</span>':''}</span>
+          </div>
+          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${p}%;background:${pctColor(p)};"></div></div>
+          <input type="range" min="0" max="100" step="5" value="${p}" style="width:100%;margin-top:8px;" oninput="updatePct('${s.id}',this.value)" />
+        </div>
+        <button class="icon-btn del" onclick="delS('${s.id}')" style="align-self:flex-start;flex-shrink:0;">🗑️</button>
+      </div></div>`;
+    } else {
+      const low=s.quantity<=2&&s.quantity>0; const out=s.quantity===0;
+      return `<div class="card${out?" danger":low?" warn":""}"><div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">${e}</span>
+        <div style="flex:1;"><div style="font-weight:700;font-size:14px;">${s.name}</div>${out?`<span class="badge badge-danger">Agotado</span>`:low?`<span class="badge badge-warn">Stock bajo</span>`:""}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="qty-btn" onclick="adjS('${s.id}',-1)">−</button>
+          <span style="min-width:42px;text-align:center;font-weight:700;">${s.quantity}<span style="font-size:10px;color:#475569;"> ${s.unit}</span></span>
+          <button class="qty-btn" onclick="adjS('${s.id}',1)">+</button>
+        </div>
+        <button class="icon-btn del" onclick="delS('${s.id}')">🗑️</button>
+      </div></div>`;
+    }
+  }).join("");
+}
+
+function toggleStock(){ stockVisible=!stockVisible; document.getElementById("stock-section").style.display=stockVisible?"block":"none"; document.getElementById("btn-stock").textContent=stockVisible?"▲ ocultar":"▼ ver"; }
+function renderModeFields(){ const m=document.getElementById("ms-mode").value; document.getElementById("ms-units-fields").style.display=m==="units"?"block":"none"; document.getElementById("ms-pct-fields").style.display=m==="pct"?"block":"none"; }
+function adjR(type,d){ if(type==="adult"){adultR=Math.max(0,adultR+d);document.getElementById("adult-val").textContent=adultR;}else{childR=Math.max(0,childR+d);document.getElementById("child-val").textContent=childR;} }
+function openModal(t){ if(t==="tupper") openAddT(); else openAddS(); }
+function openAddT(){ window._eTId=null; adultR=0; childR=0; document.getElementById("mt-title").textContent="Nuevo tupper"; document.getElementById("mt-name").value=""; document.getElementById("mt-date").value=today(); document.getElementById("adult-val").textContent=0; document.getElementById("child-val").textContent=0; document.getElementById("modal-tupper").style.display="block"; }
+function openEditT(id){ const t=tuppers.find(x=>x.id===id); if(!t) return; window._eTId=id; adultR=t.adult||0; childR=t.child||0; document.getElementById("mt-title").textContent="Editar tupper"; document.getElementById("mt-name").value=t.name; document.getElementById("mt-date").value=t.date; document.getElementById("adult-val").textContent=adultR; document.getElementById("child-val").textContent=childR; document.getElementById("modal-tupper").style.display="block"; }
+function closeMT(e){ if(e.target===e.currentTarget) closeMTD(); }
+function closeMTD(){ document.getElementById("modal-tupper").style.display="none"; window._eTId=null; }
+function openAddS(){ window._eSId=null; document.getElementById("ms-title").textContent="Nuevo producto"; document.getElementById("ms-name").value=""; document.getElementById("ms-cat").value="carne"; document.getElementById("ms-mode").value="units"; document.getElementById("ms-qty").value=1; document.getElementById("ms-unit").value="uds"; document.getElementById("ms-pct").value=100; renderModeFields(); document.getElementById("modal-stock").style.display="block"; if(!stockVisible)toggleStock(); }
+function closeMS(e){ if(e.target===e.currentTarget) closeMSD(); }
+function closeMSD(){ document.getElementById("modal-stock").style.display="none"; }
+
+async function saveTupper(){
+  const name=document.getElementById("mt-name").value.trim(); if(!name) return;
+  const btn=document.getElementById("btn-save-t"); btn.textContent="Guardando..."; btn.disabled=true;
+  try {
+    const obj={id:window._eTId||uid(),name,date:document.getElementById("mt-date").value,adult:adultR,child:childR};
+    await apiWrite("Tuppers",window._eTId?"update":"add",obj);
+    if(window._eTId) tuppers=tuppers.map(t=>t.id===window._eTId?obj:t); else tuppers.push(obj);
+    setStatus(`${tuppers.length} tuppers · ${stocks.length} productos · Google Sheets`);
+    closeMTD(); render();
+  } catch(e){ alert("Error: "+e.message); }
+  btn.textContent="Guardar"; btn.disabled=false;
+}
+
+async function delT(id){
+  if(!confirm("¿Eliminar este tupper?")) return;
+  try { await apiWrite("Tuppers","delete",{id}); tuppers=tuppers.filter(t=>t.id!==id); render(); setStatus(`${tuppers.length} tuppers · ${stocks.length} productos · Google Sheets`); }
+  catch(e){ alert("Error: "+e.message); }
+}
+
+async function saveStock(){
+  const name=document.getElementById("ms-name").value.trim(); if(!name) return;
+  const mode=document.getElementById("ms-mode").value;
+  const btn=document.getElementById("btn-save-s"); btn.textContent="Guardando..."; btn.disabled=true;
+  try {
+    const obj={id:window._eSId||uid(),name,category:document.getElementById("ms-cat").value,mode,quantity:mode==="units"?Number(document.getElementById("ms-qty").value)||0:0,unit:mode==="units"?document.getElementById("ms-unit").value||"uds":"uds",pct:mode==="pct"?Number(document.getElementById("ms-pct").value)||100:100};
+    await apiWrite("Stock",window._eSId?"update":"add",obj);
+    if(window._eSId) stocks=stocks.map(s=>s.id===window._eSId?obj:s); else stocks.push(obj);
+    setStatus(`${tuppers.length} tuppers · ${stocks.length} productos · Google Sheets`);
+    closeMSD(); render();
+  } catch(e){ alert("Error: "+e.message); }
+  btn.textContent="Guardar"; btn.disabled=false;
+}
+
+function updatePct(id,val){
+  stocks=stocks.map(s=>s.id===id?{...s,pct:Number(val)}:s); render();
+  clearTimeout(pctTimer);
+  pctTimer=setTimeout(async()=>{ const s=stocks.find(x=>x.id===id); if(s) try{ await apiWrite("Stock","update",s); }catch(e){ alert("Error: "+e.message); } },800);
+}
+
+async function adjS(id,d){
+  stocks=stocks.map(s=>s.id===id?{...s,quantity:Math.max(0,s.quantity+d)}:s); render();
+  const s=stocks.find(x=>x.id===id);
+  if(s) try{ await apiWrite("Stock","update",s); }catch(e){ alert("Error: "+e.message); }
+}
+
+async function delS(id){
+  if(!confirm("¿Eliminar?")) return;
+  try { await apiWrite("Stock","delete",{id}); stocks=stocks.filter(s=>s.id!==id); render(); setStatus(`${tuppers.length} tuppers · ${stocks.length} productos · Google Sheets`); }
+  catch(e){ alert("Error: "+e.message); }
+}
+
+load();
+</script>
+</body>
+</html>
