@@ -154,11 +154,19 @@ input[type=range] { accent-color: #6366f1; }
 <script>
 const API = "https://script.google.com/macros/s/AKfycbwByJbXk0We8s38I4j9Vmre9EJRYqVWoZ2c5hc4Sn13MyboaWSgy4G2LC1VUS_Sy0CIuQ/exec";
 
-let tuppers=[], stocks=[], adultR=0, childR=0, stockVisible=false, pctTimer=null;
+let tuppers=[], stocks=[], adultR=0, childR=0, stockVisible=false, pctTimer=null, tupperSaveTimer={};
 
 function today(){ return new Date().toISOString().split("T")[0]; }
 function daysSince(d){ if(!d) return null; return Math.floor((new Date()-new Date(d))/(864e5)); }
-function fmtDate(d){ if(!d) return ""; const p=d.split("-"); return `${p[2]}/${p[1]}/${p[0]}`; }
+function fmtDate(d){
+  if(!d) return "";
+  const clean=String(d).trim();
+  const iso=clean.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  const sheets=clean.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(sheets) return `${String(sheets[2]).padStart(2,'0')}/${String(sheets[1]).padStart(2,'0')}/${sheets[3]}`;
+  return clean;
+}
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function pctColor(p){ if(p<=20) return "#f87171"; if(p<=50) return "#fb923c"; return "#4ade80"; }
 function setStatus(msg,spin=false){ document.getElementById("subtitle").innerHTML=(spin?'<span class="spinner"></span>':'')+msg; }
@@ -270,8 +278,7 @@ function renderStocks(){
   }).join("");
 }
 
-let tupperSaveTimer={};
-async function adjTupper(id, field, delta){
+async function adjTupper(id,field,delta){
   tuppers=tuppers.map(t=>t.id===id?{...t,[field]:Math.max(0,t[field]+delta)}:t);
   const t=tuppers.find(x=>x.id===id);
   document.getElementById(`${field}-${id}`).textContent=t[field];
