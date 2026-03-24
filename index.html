@@ -30,7 +30,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .badge-danger { background: #f8717122; color: #f87171; }
 .badge-blue { background: #6366f122; color: #818cf8; }
 .badge-green { background: #4ade8022; color: #4ade80; }
-.qty-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; font-size: 16px; cursor: pointer; }
+.qty-btn { width: 26px; height: 26px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; font-size: 15px; cursor: pointer; display:inline-flex; align-items:center; justify-content:center; }
 .icon-btn { background: transparent; border: 1px solid #1e293b; border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: pointer; color: #64748b; }
 .icon-btn.del { color: #f87171; }
 .empty { text-align: center; color: #334155; padding: 32px 0; font-size: 14px; }
@@ -48,6 +48,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #334155; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 4px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 input[type=range] { accent-color: #6366f1; }
+.inline-ration { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.inline-ration-label { font-size: 11px; color: #475569; min-width: 52px; }
+.inline-ration-val { font-size: 13px; font-weight: 700; min-width: 20px; text-align: center; }
 </style>
 </head>
 <body>
@@ -67,12 +70,10 @@ input[type=range] { accent-color: #6366f1; }
 
 <div class="container">
   <div class="alert-bar" id="alert-bar"></div>
-
   <div class="section-header">
     <div class="section-title">🥡 Tuppers</div>
   </div>
   <div id="tupper-list"></div>
-
   <div class="section-header">
     <div class="section-title">📦 Stock habitual</div>
     <button class="toggle-btn" id="btn-stock" onclick="toggleStock()">▼ ver</button>
@@ -160,23 +161,23 @@ function daysSince(d){ if(!d) return null; return Math.floor((new Date()-new Dat
 function fmtDate(d){ if(!d) return ""; const p=d.split("-"); return `${p[2]}/${p[1]}/${p[0]}`; }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function pctColor(p){ if(p<=20) return "#f87171"; if(p<=50) return "#fb923c"; return "#4ade80"; }
-function setStatus(msg, spin=false){ document.getElementById("subtitle").innerHTML=(spin?'<span class="spinner"></span>':'')+msg; }
+function setStatus(msg,spin=false){ document.getElementById("subtitle").innerHTML=(spin?'<span class="spinner"></span>':'')+msg; }
 
 async function apiCall(params){
-  const url = API+"?"+new URLSearchParams(params).toString();
-  const r = await fetch(url);
+  const url=API+"?"+new URLSearchParams(params).toString();
+  const r=await fetch(url);
   if(!r.ok) throw new Error("HTTP "+r.status);
   return r.json();
 }
-async function apiRead(sheet){ return apiCall({sheet, action:"read"}); }
-async function apiWrite(sheet, action, row){ return apiCall({sheet, action, row:encodeURIComponent(JSON.stringify(row))}); }
+async function apiRead(sheet){ return apiCall({sheet,action:"read"}); }
+async function apiWrite(sheet,action,row){ return apiCall({sheet,action,row:encodeURIComponent(JSON.stringify(row))}); }
 
 async function load(){
-  setStatus("Cargando...", true);
+  setStatus("Cargando...",true);
   try {
-    const [tv,sv] = await Promise.all([apiRead("Tuppers"), apiRead("Stock")]);
-    tuppers = tv.map(r=>({id:String(r.id),name:r.name||"",date:r.date||"",adult:Number(r.adult)||0,child:Number(r.child)||0}));
-    stocks = sv.map(r=>({id:String(r.id),name:r.name||"",category:r.category||"otros",mode:r.mode||"units",quantity:Number(r.quantity)||0,unit:r.unit||"uds",pct:Number(r.pct)||100}));
+    const [tv,sv]=await Promise.all([apiRead("Tuppers"),apiRead("Stock")]);
+    tuppers=tv.map(r=>({id:String(r.id),name:r.name||"",date:r.date||"",adult:Number(r.adult)||0,child:Number(r.child)||0}));
+    stocks=sv.map(r=>({id:String(r.id),name:r.name||"",category:r.category||"otros",mode:r.mode||"units",quantity:Number(r.quantity)||0,unit:r.unit||"uds",pct:Number(r.pct)||100}));
     setStatus(`${tuppers.length} tuppers · ${stocks.length} productos · Google Sheets`);
   } catch(e){ setStatus("Error: "+e.message); }
   render();
@@ -185,8 +186,8 @@ async function load(){
 function render(){ renderAlerts(); renderTuppers(); renderStocks(); }
 
 function renderAlerts(){
-  const o=tuppers.filter(t=>{const d=daysSince(t.date);return d>60;});
-  const m=tuppers.filter(t=>{const d=daysSince(t.date);return d>30&&d<=60;});
+  const o=tuppers.filter(t=>{const d=daysSince(t.date);return d!==null&&d>60;});
+  const m=tuppers.filter(t=>{const d=daysSince(t.date);return d!==null&&d>30&&d<=60;});
   const lp=stocks.filter(s=>s.mode==="pct"&&s.pct<=20);
   const lo=stocks.filter(s=>s.mode==="units"&&s.quantity===0);
   const lu=stocks.filter(s=>s.mode==="units"&&s.quantity<=2&&s.quantity>0);
@@ -205,20 +206,28 @@ function renderTuppers(){
   document.getElementById("tupper-list").innerHTML=sorted.map(t=>{
     const ds=daysSince(t.date);
     let badge="",cls="card";
-    if(ds>60){badge=`<span class="badge badge-danger">+${ds}d</span>`;cls="card danger";}
-    else if(ds>30){badge=`<span class="badge badge-warn">${ds}d</span>`;cls="card warn";}
-    else{badge=`<span class="badge badge-ok">${ds}d</span>`;}
-    const r=[];
-    if(t.adult>0) r.push(`<span class="badge badge-blue">${t.adult} adulto${t.adult>1?"s":""}</span>`);
-    if(t.child>0) r.push(`<span class="badge badge-green">${t.child} infantil${t.child>1?"es":""}</span>`);
+    if(ds!==null&&ds>60){badge=`<span class="badge badge-danger">+${ds}d</span>`;cls="card danger";}
+    else if(ds!==null&&ds>30){badge=`<span class="badge badge-warn">${ds}d</span>`;cls="card warn";}
+    else if(ds!==null){badge=`<span class="badge badge-ok">${ds}d</span>`;}
     return `<div class="${cls}"><div style="display:flex;align-items:flex-start;gap:10px;">
       <span style="font-size:22px;flex-shrink:0;">🥡</span>
       <div style="flex:1;min-width:0;">
         <div style="font-weight:700;font-size:14px;">${t.name}</div>
         <div style="font-size:12px;color:#64748b;margin-top:3px;">Preparado: ${fmtDate(t.date)} ${badge}</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${r.join("")}</div>
+        <div class="inline-ration">
+          <span class="inline-ration-label">Adulto</span>
+          <button class="qty-btn" onclick="adjTupper('${t.id}','adult',-1)">−</button>
+          <span class="inline-ration-val" id="adult-${t.id}">${t.adult}</span>
+          <button class="qty-btn" onclick="adjTupper('${t.id}','adult',1)">+</button>
+        </div>
+        <div class="inline-ration">
+          <span class="inline-ration-label">Infantil</span>
+          <button class="qty-btn" onclick="adjTupper('${t.id}','child',-1)">−</button>
+          <span class="inline-ration-val" id="child-${t.id}">${t.child}</span>
+          <button class="qty-btn" onclick="adjTupper('${t.id}','child',1)">+</button>
+        </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
         <button class="icon-btn" onclick="openEditT('${t.id}')">✏️</button>
         <button class="icon-btn del" onclick="delT('${t.id}')">🗑️</button>
       </div>
@@ -259,6 +268,17 @@ function renderStocks(){
       </div></div>`;
     }
   }).join("");
+}
+
+let tupperSaveTimer={};
+async function adjTupper(id, field, delta){
+  tuppers=tuppers.map(t=>t.id===id?{...t,[field]:Math.max(0,t[field]+delta)}:t);
+  const t=tuppers.find(x=>x.id===id);
+  document.getElementById(`${field}-${id}`).textContent=t[field];
+  clearTimeout(tupperSaveTimer[id]);
+  tupperSaveTimer[id]=setTimeout(async()=>{
+    try{ await apiWrite("Tuppers","update",t); } catch(e){ alert("Error: "+e.message); }
+  },800);
 }
 
 function toggleStock(){ stockVisible=!stockVisible; document.getElementById("stock-section").style.display=stockVisible?"block":"none"; document.getElementById("btn-stock").textContent=stockVisible?"▲ ocultar":"▼ ver"; }
