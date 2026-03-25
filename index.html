@@ -185,7 +185,7 @@ async function load(){
   try {
     const [tv,sv]=await Promise.all([apiRead("Tuppers"),apiRead("Stock")]);
     tuppers=tv.map(r=>({id:String(r.id),name:r.name||"",date:r.date||"",adult:Number(r.adult)||0,child:Number(r.child)||0}));
-    stocks=sv.map(r=>({id:String(r.id),name:r.name||"",category:r.category||"otros",mode:r.mode||"units",quantity:Number(r.quantity)||0,unit:r.unit||"uds",pct:Number(r.pct)||100}));
+    stocks=sv.map(r=>({id:String(r.id),name:r.name||"",category:r.category||"otros",mode:r.mode||"units",quantity:Number(r.quantity)||0,unit:r.unit||"uds",pct:r.pct!==""&&r.pct!==undefined?Number(r.pct):100}));
     setStatus(`${tuppers.length} tuppers · ${stocks.length} productos · Google Sheets`);
   } catch(e){ setStatus("Error: "+e.message); }
   render();
@@ -324,7 +324,7 @@ async function saveStock(){
   const mode=document.getElementById("ms-mode").value;
   const btn=document.getElementById("btn-save-s"); btn.textContent="Guardando..."; btn.disabled=true;
   try {
-    const obj={id:window._eSId||uid(),name,category:document.getElementById("ms-cat").value,mode,quantity:mode==="units"?Number(document.getElementById("ms-qty").value)||0:0,unit:mode==="units"?document.getElementById("ms-unit").value||"uds":"uds",pct:mode==="pct"?Number(document.getElementById("ms-pct").value)||100:100};
+    const obj={id:window._eSId||uid(),name,category:document.getElementById("ms-cat").value,mode,quantity:mode==="units"?Number(document.getElementById("ms-qty").value)||0:0,unit:mode==="units"?document.getElementById("ms-unit").value||"uds":"uds",pct:mode==="pct"?Number(document.getElementById("ms-pct").value??100):100};
     await apiWrite("Stock",window._eSId?"update":"add",obj);
     if(window._eSId) stocks=stocks.map(s=>s.id===window._eSId?obj:s); else stocks.push(obj);
     setStatus(`${tuppers.length} tuppers · ${stocks.length} productos · Google Sheets`);
