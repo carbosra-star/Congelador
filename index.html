@@ -196,15 +196,17 @@ function render(){ renderAlerts(); renderTuppers(); renderStocks(); }
 function renderAlerts(){
   const o=tuppers.filter(t=>{const d=daysSince(t.date);return d!==null&&d>60;});
   const m=tuppers.filter(t=>{const d=daysSince(t.date);return d!==null&&d>30&&d<=60;});
-  const lp=stocks.filter(s=>s.mode==="pct"&&s.pct<=20);
-  const lo=stocks.filter(s=>s.mode==="units"&&s.quantity===0);
-  const lu=stocks.filter(s=>s.mode==="units"&&s.quantity<=2&&s.quantity>0);
-  let h="";
-  if(o.length) h+=`<span class="chip chip-danger">${o.length} tupper${o.length>1?"s":""} +60d</span>`;
-  if(m.length) h+=`<span class="chip chip-warn">${m.length} tupper${m.length>1?"s":""} +30d</span>`;
-  if(lp.length) h+=`<span class="chip chip-warn">${lp.length} stock ≤20%</span>`;
-  if(lo.length) h+=`<span class="chip chip-danger">${lo.length} agotado${lo.length>1?"s":""}</span>`;
-  if(lu.length) h+=`<span class="chip chip-warn">${lu.length} stock bajo</span>`;
+const lpOut=stocks.filter(s=>s.mode==="pct"&&s.pct===0);
+const lpLow=stocks.filter(s=>s.mode==="pct"&&s.pct>0&&s.pct<=20);
+const lo=stocks.filter(s=>s.mode==="units"&&s.quantity===0);
+const lu=stocks.filter(s=>s.mode==="units"&&s.quantity<=2&&s.quantity>0);
+let h="";
+if(o.length) h+=`<span class="chip chip-danger">${o.length} tupper${o.length>1?"s":""} +60d</span>`;
+if(m.length) h+=`<span class="chip chip-warn">${m.length} tupper${m.length>1?"s":""} +30d</span>`;
+if(lpOut.length) h+=`<span class="chip chip-danger">${lpOut.length} agotado${lpOut.length>1?"s":""}</span>`;
+if(lpLow.length) h+=`<span class="chip chip-warn">${lpLow.length} stock ≤20%</span>`;
+if(lo.length) h+=`<span class="chip chip-danger">${lo.length} agotado${lo.length>1?"s":""}</span>`;
+if(lu.length) h+=`<span class="chip chip-warn">${lu.length} stock bajo</span>`;
   document.getElementById("alert-bar").innerHTML=h;
 }
 
