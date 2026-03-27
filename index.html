@@ -191,7 +191,7 @@ async function load(){
   render();
 }
 
-function render(){ renderAlerts(); renderTuppers(); renderStocks(); }
+function render(){ renderAlerts(); renderTuppers(); s(); }
 
 function renderAlerts(){
   const o=tuppers.filter(t=>{const d=daysSince(t.date);return d!==null&&d>60;});
@@ -245,7 +245,7 @@ function renderTuppers(){
   }).join("");
 }
 
-function renderStocks(){
+function s(){
   if(!stocks.length){ document.getElementById("stock-list").innerHTML=`<div class="empty">Sin productos de stock</div>`; return; }
   const CATS={carne:"🥩",pescado:"🐟",verdura:"🥦",precocinado:"📦",pan:"🍞",otros:"❄️"};
   document.getElementById("stock-list").innerHTML=stocks.map(s=>{
@@ -259,8 +259,13 @@ function renderStocks(){
             <span style="font-weight:700;font-size:14px;">${s.name}</span>
             <span style="font-size:13px;font-weight:700;color:${pctColor(p)};">${p}%${low?' <span class="badge badge-warn">Comprar</span>':''}</span>
           </div>
-          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${p}%;background:${pctColor(p)};"></div></div>
-          <input type="range" min="0" max="100" step="5" value="${p}" style="width:100%;margin-top:8px;" oninput="updatePct('${s.id}',this.value)" />
+       <div class="pct-bar-bg" style="margin-bottom:8px;"><div class="pct-bar-fill" style="width:${p}%;background:${pctColor(p)};"></div></div>
+          <div style="display:flex;gap:4px;">
+            <button class="qty-btn" style="width:36px;font-size:11px;font-weight:700;" onclick="updatePct('${s.id}',Math.max(0,${p}-10))">−10</button>
+            <button class="qty-btn" style="width:36px;font-size:11px;font-weight:700;" onclick="updatePct('${s.id}',Math.max(0,${p}-5))">−5</button>
+            <button class="qty-btn" style="width:36px;font-size:11px;font-weight:700;" onclick="updatePct('${s.id}',Math.min(100,${p}+5))">+5</button>
+            <button class="qty-btn" style="width:36px;font-size:11px;font-weight:700;" onclick="updatePct('${s.id}',Math.min(100,${p}+10))">+10</button>
+          </div>
         </div>
         <button class="icon-btn del" onclick="delS('${s.id}')" style="align-self:flex-start;flex-shrink:0;">🗑️</button>
       </div></div>`;
